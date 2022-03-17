@@ -13,8 +13,16 @@ import org.springframework.web.client.RestTemplate;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity {
+
+    // Esto es un pool de hilos, crea 5 hilos y crece hasta 10 en caso necesario. Cuando un hilo
+    // lleva más de 10 minutos sin hacer nada, se elimina.
+    private ThreadPoolExecutor executor = new ThreadPoolExecutor(5, 10, 10, TimeUnit.MINUTES, new LinkedBlockingDeque<>());
+
     private BooksApi booksApi = new BookClient(new RestTemplate(), "http://10.0.2.2:8080");
 
     private TextView msg;
@@ -27,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         msg = findViewById(R.id.msg);
         // Ejecutamos el loadBooks en otro thread
-        new Thread(() -> loadBooks()).start();
+        executor.submit(() -> loadBooks());
     }
 
 
@@ -45,11 +53,9 @@ public class MainActivity extends AppCompatActivity {
             });
 
         } catch (Exception e) {
-
             msg.post(() -> {
                 StringWriter sw = new StringWriter();
                 PrintWriter pw = new PrintWriter(sw);
-                e.printStackTrace(pw);
                 msg.setText(sw.toString());
             });
         }
