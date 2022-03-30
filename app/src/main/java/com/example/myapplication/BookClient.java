@@ -1,63 +1,44 @@
 package com.example.myapplication;
 
 import org.iesfm.library.Book;
-import org.iesfm.library.client.BooksApi;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.bind.annotation.RequestParam;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 
-public class BookClient implements BooksApi {
+import retrofit2.Call;
+import retrofit2.http.Body;
+import retrofit2.http.GET;
+import retrofit2.http.POST;
+import retrofit2.http.PUT;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
 
-    private RestTemplate restTemplate;
-    private String host;
+/**
+ * Este interfaz lo tenemos que hacer simétrico al que tenemos al otro lado, en el backend.
+ *
+ * El único cambio es que el return type SIEMPRE debe estar entre Call<>
+ *
+ */
+public interface BookClient {
 
-    public BookClient(
-            RestTemplate restTemplate,
-            @Value("${book.api}") String host) {
-        this.restTemplate = restTemplate;
-        this.host = host;
-    }
 
-    @Override
-    public void post(Book book) {
-        restTemplate.postForObject(host + "/books", book, Void.class);
-    }
+    @POST("/books")
+    Call<Void> createBook(@Body Book book);
 
-    @Override
-    public List<Book> getBooks(Boolean available, Integer year) {
-        HashMap<String, Object> params = new HashMap<>();
-        if (available != null) {
-            params.put("available", available);
-        }
-        if (year != null) {
-            params.put("year", year);
-        }
-        Book[] books = restTemplate.getForObject(host + "/books", Book[].class, params);
-        return Arrays.asList(books);
-    }
+    @GET("/books")
+    Call<List<Book>> getAllBooks();
 
-    @Override
-    public List<Book> getBooksByAuthor(String author) {
-        try {
-            Book[] books = restTemplate.getForObject(URLEncoder.encode(host + "/author/" + author, StandardCharsets.UTF_8.name()), Book[].class);
+    @GET("/books")
+    Call<List<Book>> getAvailableBooks(@Query("available") boolean available);
 
-            return Arrays.asList(books);
-        } catch (UnsupportedEncodingException e) {
-            return null;
-        }
-    }
+    @GET("/books")
+    Call<List<Book>> getYearBooks(@Query("year") int year);
 
-    @Override
-    public void updateBook(String isbn, Book book) {
-        restTemplate.put(host + "/books/" + isbn, book, Void.class);
-    }
+    @GET("/authors/{author}/books")
+    Call<List<Book>> getBooksByAuthor(@Path("author") String author);
+
+    @PUT("/books/{isbn}")
+    Call<Void> updateBook(@Path("isbn") String isbn, @Body Book book);
 }
 
 
