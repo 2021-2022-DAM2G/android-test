@@ -47,6 +47,24 @@ public class MainActivity extends AppCompatActivity {
 
 
     public void loadBooks() {
+
+        booksClient.createBook(new Book("1fdsfds", "Otro", "AAA", 1900)).enqueue(
+                new Callback<>() {
+                    @Override
+                    public void onResponse(Call<Void> call, Response<Void> response) {
+                        if(response.code() == 409) {
+                            msg.append("Duplicado\n");
+
+                        } else {
+                            msg.append("Libro creado\n");
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<Void> call, Throwable t) {
+                        Log.e("MainActivity", t.getMessage(), t);                    }
+                }
+        );
         // Realizamos una llamada asíncrona (en otro hilo) al backend
         // Las llamadas al backend deben realizarse de manera asíncrona
         // obligatoriamente, debido al modelo de concurrencia de Android
